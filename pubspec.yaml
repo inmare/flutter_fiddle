@@ -1,0 +1,40 @@
+name: dart_pcm
+description: "A new Flutter project."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  ffi: ^2.1.5
+  flutter:
+    sdk: flutter
+  mp_audio_stream: ^0.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  ffigen: ^20.1.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+
+# ffigen 관련 설정
+ffigen:
+  name: SoundTouchBindings
+  description: "SoundTouch library bindings"
+  output: "lib/soundtouch_bindings.dart"
+
+  # C++ bridge 헤더파일 경로
+  headers:
+    entry-points:
+      - "native/bridge.h"
+
+  # 포함할 함수 및 구조체
+  functions:
+    include:
+      - st_.* # st_로 시작하는 모든 함수들
