@@ -1,0 +1,6 @@
+CompileFlags:
+  Add: 
+    - "-Id:/Fiddles/dart_pcm/native/soundtouch_bridge/soundtouch/include"
+    - "-Id:/Fiddles/dart_pcm/native/demucs_bridge/demucs.onnx/src"
+    - "-Id:/Fiddles/dart_pcm/native/demucs_bridge/demucs.onnx/vendor/eigen"
+    - "-Id:/Fiddles/dart_pcm/native/demucs_bridge/demucs.onnx/vendor/onnxruntime/include"

@@ -39,38 +39,33 @@ target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
 
-# 1. 현재 파일(windows/runner/CMakeLists.txt) 기준으로 프로젝트 루트 경로 계산
-# (runner -> windows -> project_root)
-get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+# =========================================================
+# [수정됨] 공통 Native CMakeLists.txt 불러오기
+# =========================================================
 
-# 디버깅용 메시지 출력 (빌드할 때 터미널에 경로가 찍힙니다)
-message(STATUS ">>> 프로젝트 루트 경로 확인: ${PROJECT_ROOT}")
+# 1. native 폴더의 CMakeLists.txt 실행
+# (windows/runner 기준: ../../native/CMakeLists.txt)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../native" native_build)
 
-# 2. 소스 파일 검색 (절대 경로 사용)
-file(GLOB_RECURSE SOUNDTOUCH_SOURCES
-  "${PROJECT_ROOT}/native/bridge.cpp"
-  "${PROJECT_ROOT}/native/soundtouch/source/SoundTouch/*.cpp"
-)
+# 2. 메인 실행 파일에 라이브러리 링크
+target_link_libraries(${BINARY_NAME} PRIVATE native_audio_plugin)
 
-# 3. [안전장치] 만약 소스 파일을 못 찾았으면 에러를 띄우고 멈춤
-if(NOT SOUNDTOUCH_SOURCES)
-  message(FATAL_ERROR "SoundTouch 소스 파일을 찾을 수 없습니다! 위 경로에 실제 파일이 있는지 확인해주세요.")
-endif()
-
-# soundtouch_plugin 이라는 이름의 라이브러리 생성
-add_library(soundtouch_plugin SHARED ${SOUNDTOUCH_SOURCES})
-
-# 헤더파일의 경로 지정
-target_include_directories(soundtouch_plugin PUBLIC
-  "../../native/soundtouch/include"
-)
-
-# flutter에서 soundtouch_plugin 라이브러리를 링크하도록 지정
-target_link_libraries(${BINARY_NAME} PRIVATE soundtouch_plugin)
-
-# 빌드된 dll 파일을 실행 파일 옆으로 복사
+# 3. DLL 파일 복사 (Windows 전용)
+# 빌드 후 생성된 .dll 파일들을 실행 파일(.exe) 옆으로 복사해야 실행됩니다.
 add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:soundtouch_plugin>
+    $<TARGET_FILE:native_audio_plugin>
     $<TARGET_FILE_DIR:${BINARY_NAME}>
 )
+
+# # ONNX Runtime DLL 복사
+# 빌드 후 onnxruntime.dll을 실행 파일 옆으로 복사
+file(GLOB ONNX_DLLS "${CMAKE_CURRENT_SOURCE_DIR}/../../native/demucs_bridge/demucs.onnx/vendor/onnxruntime/lib/*.dll")
+
+foreach(dll_file ${ONNX_DLLS})
+  add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${dll_file}"
+    $<TARGET_FILE_DIR:${BINARY_NAME}>
+  )
+endforeach()
