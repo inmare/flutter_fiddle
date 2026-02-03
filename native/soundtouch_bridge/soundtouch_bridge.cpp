@@ -1,4 +1,4 @@
-#include "bridge.h"
+#include "soundtouch_bridge.hpp"
 #include "SoundTouch.h"
 
 using namespace soundtouch;
