@@ -44,8 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# SoundTouch
-native/soundtouch/**.*
+# Native modules
+native/soundtouch_bridge/soundtouch/**.*
+native/demucs_bridge/demucs.onnx/**.*
+
+native/demucs_bridge/test/build/
 
 # Assets
 assets/**.*
