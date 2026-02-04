@@ -58,7 +58,7 @@ add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
     $<TARGET_FILE_DIR:${BINARY_NAME}>
 )
 
-# # ONNX Runtime DLL 복사
+# ONNX Runtime DLL 복사
 # 빌드 후 onnxruntime.dll을 실행 파일 옆으로 복사
 file(GLOB ONNX_DLLS "${CMAKE_CURRENT_SOURCE_DIR}/../../native/demucs_bridge/demucs.onnx/vendor/onnxruntime/lib/*.dll")
 
