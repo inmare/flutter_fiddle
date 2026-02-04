@@ -21,6 +21,7 @@
 #include <stddef.h>
 // #include <tuple>
 #include <vector>
+#include "demucs_bridge.h"
 
 // using namespace nqr;
 
