@@ -25,14 +25,14 @@ flutter:
 
 # ffigen 관련 설정
 ffigen:
-  name: SoundTouchBindings
-  description: "SoundTouch library bindings"
-  output: "lib/soundtouch_bindings.dart"
+  name: NativeAudioBindings
+  description: "Native audio library bindings"
+  output: "lib/native_audio_bindings.dart"
 
   # C++ bridge 헤더파일 경로
   headers:
     entry-points:
-      - "native/bridge.h"
+      - "native/soundtouch_bridge/soundtouch_bridge.h"
 
   # 포함할 함수 및 구조체
   functions:
