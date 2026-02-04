@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:math'; // [필수] pow 함수 사용을 위해 추가
@@ -6,7 +7,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mp_audio_stream/mp_audio_stream.dart';
 
-import 'soundtouch.dart'; // [추가]
+import 'dart:developer' as dev;
+
+import 'native/soundtouch.dart'; // [추가]
 
 void main(List<String> arguments) async {
   runApp(const MaterialApp(home: AudioPlayerScreen()));
@@ -27,21 +30,51 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
   late SoundTouch _soundTouch;
   // [추가] 현재 피치(반음 단위) 상태 관리
   int _currentSemitone = 0;
+  Process? _process;
+  StreamSubscription? _subscription;
+  Timer? _timer;
+  Duration _currentPosition = Duration(milliseconds: 0);
 
   @override
   void initState() {
     super.initState();
 
-    _audioStream.init(
-      bufferMilliSec: 200,
-      waitingBufferMilliSec: 100,
-      channels: 2,
-      sampleRate: 44100,
-    );
-
     // SoundTouch 초기화 및 설정
     _soundTouch = SoundTouch();
     _soundTouch.setSettings(44100, 2, 1.0, 1.0);
+  }
+
+  void _processStream(List<int> byteChunk) {
+    List<int> currentBatch = [..._leftoverBytes, ...byteChunk];
+
+    // 정수 바이트 데이터를 4바이트 단위로 나누기
+    int remainder = currentBatch.length % 4;
+    int processableLength = currentBatch.length - remainder;
+
+    // 현재 남아있는 데이터가 너무 적으면 그냥 전체를 저장하기
+    if (processableLength == 0) {
+      _leftoverBytes = currentBatch;
+      return;
+    }
+
+    // 남는 데이터는 다음 청크로 넘기기
+    List<int> bytesToProcess = currentBatch.sublist(0, processableLength);
+    _leftoverBytes = currentBatch.sublist(processableLength);
+
+    // 1. 바이트 -> Float32 변환 (원본 오디오)
+    Float32List rawSamples = _bytesToFloat32(bytesToProcess);
+
+    // ========================================================
+    // [추가 3] SoundTouch 프로세싱 (여기가 결합 포인트!)
+    // 원본 데이터를 넣고, 변조된 데이터를 받습니다.
+    // ========================================================
+    List<double> processedData = _soundTouch.process(rawSamples);
+
+    // 2. 결과물 -> Float32List로 변환하여 스피커로 전송
+    // (SoundTouch에서 아무것도 안 나오면 건너뜀)
+    if (processedData.isNotEmpty) {
+      _audioStream.push(Float32List.fromList(processedData));
+    }
   }
 
   // 반음을 변경하고 SoundTouch에 즉시 적용하는 함수
@@ -57,19 +90,21 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
     // (재생 중인 루프에서 다음 청크를 처리할 때 이 값이 바로 반영됩니다)
     _soundTouch.setSettings(44100, 2, newPitch, 1.0);
 
-    print("피치 변경: $_currentSemitone 반음 (배율: $newPitch)");
+    dev.log("피치 변경: $_currentSemitone 반음 (배율: $newPitch)");
   }
 
-  void playMusicWithFFmpeg() async {
-    setState(() {
-      _isPlaying = true;
-    });
-
-    _currentSemitone = 0; // 피치 초기화
+  void playMusic() async {
+    _audioStream.init(
+      bufferMilliSec: 200,
+      waitingBufferMilliSec: 100,
+      channels: 2,
+      sampleRate: 44100,
+    );
 
     final process = await Process.start('assets/ffmpeg.exe', [
       '-re', // Read input at native frame rate
-      '-i', 'assets/Miku-Ringtone.mp3', // Input file
+      '-ss', _currentPosition.toString(), // Start position
+      '-i', 'assets/lustorus_mr.mp3', // Input file
       '-f', 'f32le', // PCM 32-bit float little-endian
       '-ar', '44100', // Sample rate
       '-ac', '2', // Number of channels
@@ -77,50 +112,53 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
       'pipe:1', // Output to stdout
     ]);
 
-    process.stdout.listen(
-      (List<int> byteChunk) {
-        List<int> currentBatch = [..._leftoverBytes, ...byteChunk];
+    _currentSemitone = 0; // 피치 초기화
 
-        // 정수 바이트 데이터를 4바이트 단위로 나누기
-        int remainder = currentBatch.length % 4;
-        int processableLength = currentBatch.length - remainder;
+    setState(() {
+      _process = process;
 
-        // 현재 남아있는 데이터가 너무 적으면 그냥 전체를 저장하기
-        if (processableLength == 0) {
-          _leftoverBytes = currentBatch;
-          return;
-        }
+      // stream subscription 반환
+      _subscription = _process?.stdout.listen(
+        _processStream,
+        onDone: () {
+          dev.log('재생 끝!');
+          setState(() {
+            _subscription?.cancel();
+            _process?.kill(ProcessSignal.sigkill);
+            _isPlaying = false;
+            _currentPosition = Duration(milliseconds: 0);
+            _timer?.cancel();
+          });
+        },
+      );
 
-        // 남는 데이터는 다음 청크로 넘기기
-        List<int> bytesToProcess = currentBatch.sublist(0, processableLength);
-        _leftoverBytes = currentBatch.sublist(processableLength);
+      // FFmpeg 에러 출력 처리
+      _process?.stderr.transform(utf8.decoder).listen((msg) {
+        dev.log('FFmpeg Log: $msg');
+      });
 
-        // 1. 바이트 -> Float32 변환 (원본 오디오)
-        Float32List rawSamples = _bytesToFloat32(bytesToProcess);
+      _isPlaying = true;
 
-        // ========================================================
-        // [추가 3] SoundTouch 프로세싱 (여기가 결합 포인트!)
-        // 원본 데이터를 넣고, 변조된 데이터를 받습니다.
-        // ========================================================
-        List<double> processedData = _soundTouch.process(rawSamples);
+      _timer = Timer.periodic(
+        const Duration(milliseconds: 100),
+        (timer) => (setState(() {
+          _currentPosition += Duration(milliseconds: 100);
+        })),
+      );
+    });
+  }
 
-        // 2. 결과물 -> Float32List로 변환하여 스피커로 전송
-        // (SoundTouch에서 아무것도 안 나오면 건너뜀)
-        if (processedData.isNotEmpty) {
-          _audioStream.push(Float32List.fromList(processedData));
-        }
-      },
-      onDone: () {
-        print('재생 끝!');
-        setState(() {
-          _isPlaying = false;
-        });
-      },
-    );
-
-    // FFmpeg 에러 출력 처리
-    process.stderr.transform(utf8.decoder).listen((msg) {
-      print('FFmpeg Log: $msg');
+  void pauseMusic() {
+    setState(() {
+      // subscription이 존재하는 경우
+      // 음원 정지, 혹은 재생하기
+      if (_isPlaying) {
+        _audioStream.uninit();
+        _subscription?.cancel();
+        _process?.kill(ProcessSignal.sigkill);
+        _timer?.cancel();
+        _isPlaying = false;
+      }
     });
   }
 
@@ -133,7 +171,10 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
 
   @override
   void dispose() {
+    _subscription?.cancel();
     _audioStream.uninit();
+    _process?.kill(ProcessSignal.sigkill);
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -151,7 +192,10 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
-
+            Text(
+              _currentPosition.toString(),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             // 컨트롤 버튼
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -164,19 +208,10 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                   child: const Text("-1", style: TextStyle(fontSize: 20)),
                 ),
                 const SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _isPlaying ? null : playMusicWithFFmpeg,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isPlaying ? Colors.grey : Colors.blue,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 20,
-                    ),
-                  ),
-                  child: Text(
-                    _isPlaying ? "재생 중" : "재생 시작",
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
-                  ),
+                IconButton(
+                  onPressed: _isPlaying ? pauseMusic : playMusic,
+                  icon: _isPlaying ? Icon(Icons.pause) : Icon(Icons.play_arrow),
+                  color: Colors.blue,
                 ),
                 const SizedBox(width: 20),
                 ElevatedButton(

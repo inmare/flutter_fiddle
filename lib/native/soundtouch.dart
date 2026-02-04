@@ -2,30 +2,43 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
-import 'soundtouch_bindings.dart'; // ffigen이 생성한 파일 임포트
+import '../bindings/native_audio_bindings.dart'; // ffigen이 생성한 파일 임포트
+import 'package:flutter/foundation.dart';
+
+import 'demucs.dart';
 
 class SoundTouch {
-  late SoundTouchBindings _native; // ffigen 클래스
+  late NativeAudioBindings _native; // ffigen 클래스
   late Pointer<Void> _handle; // 객체 주소
 
   SoundTouch() {
     // 1. 라이브러리 로드
     final DynamicLibrary dylib = Platform.isWindows
-        ? DynamicLibrary.open('soundtouch_plugin.dll')
+        ? DynamicLibrary.open('native_audio_plugin.dll')
         : DynamicLibrary.process(); // 다른 플랫폼 대응 시
 
     // 2. 바인딩 클래스 초기화
-    _native = SoundTouchBindings(dylib);
+    _native = NativeAudioBindings(dylib);
 
     // 3. 객체 생성 (ffigen이 만들어준 함수 호출)
-    _handle = _native.st_create();
+    _handle = _native.soundtouch_create();
 
-    print("SoundTouch Loaded with ffigen: $_handle");
+    debugPrint("SoundTouch Loaded with ffigen: $_handle");
+
+    Future.microtask(() => loadDemucs());
+  }
+
+  void loadDemucs() async {
+    String modelPath = "D:\\Fiddles\\dart_pcm\\assets\\htdemucs.onnx";
+    debugPrint(modelPath);
+    Pointer<Char> modelPathPtr = modelPath.toNativeUtf8().cast<Char>();
+    LoadResult result = _native.demucs_load_model(modelPathPtr, 16, 16);
+    debugPrint(result.success.toString());
   }
 
   void setSettings(int rate, int channels, double pitch, double tempo) {
     // ffigen은 타입 캐스팅을 자동으로 처리해줍니다.
-    _native.st_set_settings(_handle, rate, channels, pitch, tempo);
+    _native.soundtouch_set_settings(_handle, rate, channels, pitch, tempo);
   }
 
   List<double> process(List<double> inputSamples) {
@@ -39,7 +52,7 @@ class SoundTouch {
     inputPtr.asTypedList(count).setAll(0, inputSamples);
 
     // SoundTouch에 데이터 넣기
-    _native.st_put_samples(_handle, inputPtr, count);
+    _native.soundtouch_put_samples(_handle, inputPtr, count);
     // calloc로 만들어진 메모리는 dart의 GC에서 관리하지 않기 때문에 직접 해제해 줘야 함
     calloc.free(inputPtr);
 
@@ -51,7 +64,7 @@ class SoundTouch {
 
     while (true) {
       // soundtouch에서 receiveSamples는 프레임 값을 반환
-      int framesReceived = _native.st_receive_samples(
+      int framesReceived = _native.soundtouch_receive_samples(
         _handle,
         outputPtr,
         maxOutput,
@@ -71,6 +84,6 @@ class SoundTouch {
   }
 
   void dispose() {
-    _native.st_destroy(_handle);
+    _native.soundtouch_destroy(_handle);
   }
 }

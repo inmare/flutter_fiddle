@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   mp_audio_stream: ^0.2.2
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -25,16 +26,18 @@ flutter:
 
 # ffigen 관련 설정
 ffigen:
-  name: SoundTouchBindings
-  description: "SoundTouch library bindings"
-  output: "lib/soundtouch_bindings.dart"
+  name: NativeAudioBindings
+  description: "SoundTouch, Demucs library bindings"
+  output: "lib/native_audio_bindings.dart"
 
   # C++ bridge 헤더파일 경로
   headers:
     entry-points:
-      - "native/bridge.h"
+      - "native/soundtouch_bridge/soundtouch_bridge.h"
+      - "native/demucs_bridge/demucs_bridge.h"
 
   # 포함할 함수 및 구조체
   functions:
     include:
-      - st_.* # st_로 시작하는 모든 함수들
+      - soundtouch_.* # st_로 시작하는 모든 함수들
+      - demucs_.* # demucs_로 시작하는 모든 함수들

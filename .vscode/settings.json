@@ -1,3 +1,5 @@
 {
-    "cmake.sourceDirectory": "D:/Fiddles/dart_pcm/windows"
+    "cmake.sourceDirectory": "D:/Fiddles/dart_pcm/windows",
+    "editor.indentSize": "tabSize",
+    "editor.tabSize": 4
 }

@@ -4,18 +4,18 @@
 // ignore_for_file: type=lint, unused_import
 import 'dart:ffi' as ffi;
 
-/// SoundTouch library bindings
-class SoundTouchBindings {
+/// SoundTouch, Demucs library bindings
+class NativeAudioBindings {
   /// Holds the symbol lookup function.
   final ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName)
   _lookup;
 
   /// The symbols are looked up in [dynamicLibrary].
-  SoundTouchBindings(ffi.DynamicLibrary dynamicLibrary)
+  NativeAudioBindings(ffi.DynamicLibrary dynamicLibrary)
     : _lookup = dynamicLibrary.lookup;
 
   /// The symbols are looked up with [lookup].
-  SoundTouchBindings.fromLookup(
+  NativeAudioBindings.fromLookup(
     ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup,
   ) : _lookup = lookup;
 
@@ -27,82 +27,105 @@ class SoundTouchBindings {
 
   set __security_cookie(int value) => ___security_cookie.value = value;
 
-  st_handle st_create() {
-    return _st_create();
+  handle soundtouch_create() {
+    return _soundtouch_create();
   }
 
-  late final _st_createPtr = _lookup<ffi.NativeFunction<st_handle Function()>>(
-    'st_create',
-  );
-  late final _st_create = _st_createPtr.asFunction<st_handle Function()>();
+  late final _soundtouch_createPtr =
+      _lookup<ffi.NativeFunction<handle Function()>>('soundtouch_create');
+  late final _soundtouch_create = _soundtouch_createPtr
+      .asFunction<handle Function()>();
 
-  void st_set_settings(
-    st_handle handle,
+  void soundtouch_set_settings(
+    handle handle$1,
     int sampleRate,
     int channels,
     double pitch,
     double tempo,
   ) {
-    return _st_set_settings(handle, sampleRate, channels, pitch, tempo);
+    return _soundtouch_set_settings(
+      handle$1,
+      sampleRate,
+      channels,
+      pitch,
+      tempo,
+    );
   }
 
-  late final _st_set_settingsPtr =
+  late final _soundtouch_set_settingsPtr =
       _lookup<
         ffi.NativeFunction<
-          ffi.Void Function(
-            st_handle,
-            ffi.Int32,
-            ffi.Int32,
-            ffi.Float,
-            ffi.Float,
-          )
+          ffi.Void Function(handle, ffi.Int32, ffi.Int32, ffi.Float, ffi.Float)
         >
-      >('st_set_settings');
-  late final _st_set_settings = _st_set_settingsPtr
-      .asFunction<void Function(st_handle, int, int, double, double)>();
+      >('soundtouch_set_settings');
+  late final _soundtouch_set_settings = _soundtouch_set_settingsPtr
+      .asFunction<void Function(handle, int, int, double, double)>();
 
-  void st_put_samples(
-    st_handle handle,
+  void soundtouch_put_samples(
+    handle handle$1,
     ffi.Pointer<ffi.Float> samples,
     int numSamples,
   ) {
-    return _st_put_samples(handle, samples, numSamples);
+    return _soundtouch_put_samples(handle$1, samples, numSamples);
   }
 
-  late final _st_put_samplesPtr =
+  late final _soundtouch_put_samplesPtr =
       _lookup<
         ffi.NativeFunction<
-          ffi.Void Function(st_handle, ffi.Pointer<ffi.Float>, ffi.Int32)
+          ffi.Void Function(handle, ffi.Pointer<ffi.Float>, ffi.Int32)
         >
-      >('st_put_samples');
-  late final _st_put_samples = _st_put_samplesPtr
-      .asFunction<void Function(st_handle, ffi.Pointer<ffi.Float>, int)>();
+      >('soundtouch_put_samples');
+  late final _soundtouch_put_samples = _soundtouch_put_samplesPtr
+      .asFunction<void Function(handle, ffi.Pointer<ffi.Float>, int)>();
 
-  int st_receive_samples(
-    st_handle handle,
+  int soundtouch_receive_samples(
+    handle handle$1,
     ffi.Pointer<ffi.Float> outputBuffer,
     int maxSamples,
   ) {
-    return _st_receive_samples(handle, outputBuffer, maxSamples);
+    return _soundtouch_receive_samples(handle$1, outputBuffer, maxSamples);
   }
 
-  late final _st_receive_samplesPtr =
+  late final _soundtouch_receive_samplesPtr =
       _lookup<
         ffi.NativeFunction<
-          ffi.Int32 Function(st_handle, ffi.Pointer<ffi.Float>, ffi.Int32)
+          ffi.Int32 Function(handle, ffi.Pointer<ffi.Float>, ffi.Int32)
         >
-      >('st_receive_samples');
-  late final _st_receive_samples = _st_receive_samplesPtr
-      .asFunction<int Function(st_handle, ffi.Pointer<ffi.Float>, int)>();
+      >('soundtouch_receive_samples');
+  late final _soundtouch_receive_samples = _soundtouch_receive_samplesPtr
+      .asFunction<int Function(handle, ffi.Pointer<ffi.Float>, int)>();
 
-  void st_destroy(st_handle st_handle$1) {
-    return _st_destroy(st_handle$1);
+  void soundtouch_destroy(handle handle$1) {
+    return _soundtouch_destroy(handle$1);
   }
 
-  late final _st_destroyPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(st_handle)>>('st_destroy');
-  late final _st_destroy = _st_destroyPtr
-      .asFunction<void Function(st_handle)>();
+  late final _soundtouch_destroyPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(handle)>>(
+        'soundtouch_destroy',
+      );
+  late final _soundtouch_destroy = _soundtouch_destroyPtr
+      .asFunction<void Function(handle)>();
+
+  LoadResult demucs_load_model(
+    ffi.Pointer<ffi.Char> htdemucs_model_path,
+    int intraNumThreads,
+    int interNumThreads,
+  ) {
+    return _demucs_load_model(
+      htdemucs_model_path,
+      intraNumThreads,
+      interNumThreads,
+    );
+  }
+
+  late final _demucs_load_modelPtr =
+      _lookup<
+        ffi.NativeFunction<
+          LoadResult Function(ffi.Pointer<ffi.Char>, ffi.Int32, ffi.Int32)
+        >
+      >('demucs_load_model');
+  late final _demucs_load_model = _demucs_load_modelPtr
+      .asFunction<LoadResult Function(ffi.Pointer<ffi.Char>, int, int)>();
 }
 
 typedef va_list = ffi.Pointer<ffi.Char>;
@@ -144,7 +167,14 @@ typedef intmax_t = ffi.LongLong;
 typedef Dartintmax_t = int;
 typedef uintmax_t = ffi.UnsignedLongLong;
 typedef Dartuintmax_t = int;
-typedef st_handle = ffi.Pointer<ffi.Void>;
+typedef handle = ffi.Pointer<ffi.Void>;
+
+final class LoadResult extends ffi.Struct {
+  external ffi.Pointer<ffi.Char> error_message;
+
+  @ffi.Bool()
+  external bool success;
+}
 
 const int _VCRT_COMPILER_PREPROCESSOR = 1;
 
@@ -277,3 +307,9 @@ const int WCHAR_MAX = 65535;
 const int WINT_MIN = 0;
 
 const int WINT_MAX = 65535;
+
+const int __bool_true_false_are_defined = 1;
+
+const int false$ = 0;
+
+const int true$ = 1;

@@ -20,57 +20,60 @@
 // #include <sstream>
 #include <stddef.h>
 // #include <tuple>
+#include "demucs_bridge.h"
 #include <vector>
 
 // using namespace nqr;
 
 static demucsonnx::demucs_model model;
 static bool model_loaded;
+static std::string global_error_message;
 
-static bool demucs_load_model(
-    const std::string &htdemucs_model_path,
-    int intraNumThreads,
-    int interNumThreads)
-{
-    // create Ort::SessionOptions
-    Ort::SessionOptions session_options;
+LoadResult demucs_load_model(const char *htdemucs_model_path,
+                             int intraNumThreads, int interNumThreads) {
+  model_loaded = false;
+  global_error_message = "";
 
-    // max out threads and increase performance to the max on my beefy
-    // desktop CPU
-    session_options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
-    session_options.SetIntraOpNumThreads(intraNumThreads);
-    session_options.SetInterOpNumThreads(interNumThreads);
+  // create Ort::SessionOptions
+  Ort::SessionOptions session_options;
 
-    // General optimizations
-    session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+  // max out threads and increase performance to the max on my beefy
+  // desktop CPU
+  session_options.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
+  session_options.SetIntraOpNumThreads(intraNumThreads);
+  session_options.SetInterOpNumThreads(interNumThreads);
 
-    // struct demucsonnx::demucs_model model;
+  // General optimizations
+  session_options.SetGraphOptimizationLevel(
+      GraphOptimizationLevel::ORT_ENABLE_ALL);
 
-    std::ifstream file(htdemucs_model_path, std::ios::binary | std::ios::ate);
-    if (!file)
-    {
-        return false;
-        // throw std::runtime_error("Failed to open model file: " + htdemucs_model_path);
-    }
+  std::ifstream file(htdemucs_model_path, std::ios::binary | std::ios::ate);
+  if (!file) {
+    model_loaded = false;
+    global_error_message =
+        "Failed to open model file: " + std::string(htdemucs_model_path);
+    return {global_error_message.c_str(), model_loaded};
+  }
 
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
+  std::streamsize size = file.tellg();
+  file.seekg(0, std::ios::beg);
 
-    std::vector<char> file_data(size);
-    if (!file.read(file_data.data(), size))
-    {
-        // throw std::runtime_error("Failed to read model file.");
-        return false;
-    }
+  std::vector<char> file_data(size);
+  if (!file.read(file_data.data(), size)) {
+    model_loaded = false;
+    global_error_message = "Failed to read model file.";
+    return {global_error_message.c_str(), model_loaded};
+  }
 
-    bool success = demucsonnx::load_model(file_data, model, session_options);
-    if (!success)
-    {
-        // throw std::runtime_error("Failed to load model.");
-        return false;
-    }
+  bool success = demucsonnx::load_model(file_data, model, session_options);
+  if (!success) {
+    model_loaded = false;
+    global_error_message = "Failed to load model.";
+    return {global_error_message.c_str(), model_loaded};
+  }
 
-    return true;
+  model_loaded = true;
+  return {global_error_message.c_str(), model_loaded};
 }
 
 // Overload for file path, calling one of the other overloads as needed
@@ -80,10 +83,11 @@ static bool demucs_load_model(
 // {
 //     struct demucsonnx::demucs_model model;
 
-//     std::ifstream file(htdemucs_model_path, std::ios::binary | std::ios::ate);
-//     if (!file)
+//     std::ifstream file(htdemucs_model_path, std::ios::binary |
+//     std::ios::ate); if (!file)
 //     {
-//         throw std::runtime_error("Failed to open model file: " + htdemucs_model_path);
+//         throw std::runtime_error("Failed to open model file: " +
+//         htdemucs_model_path);
 //     }
 
 //     std::streamsize size = file.tellg();
@@ -122,9 +126,11 @@ static bool demucs_load_model(
 //     }
 
 //     std::cout << "Input samples: "
-//               << fileData->samples.size() / fileData->channelCount << std::endl;
-//     std::cout << "Length in seconds: " << fileData->lengthSeconds << std::endl;
-//     std::cout << "Number of channels: " << fileData->channelCount << std::endl;
+//               << fileData->samples.size() / fileData->channelCount <<
+//               std::endl;
+//     std::cout << "Length in seconds: " << fileData->lengthSeconds <<
+//     std::endl; std::cout << "Number of channels: " << fileData->channelCount
+//     << std::endl;
 
 //     if (fileData->channelCount != 2 && fileData->channelCount != 1)
 //     {
@@ -185,7 +191,8 @@ static bool demucs_load_model(
 //     }
 
 //     int encoderStatus =
-//         encode_wav_to_disk({fileData->channelCount, PCM_FLT, DITHER_TRIANGLE},
+//         encode_wav_to_disk({fileData->channelCount, PCM_FLT,
+//         DITHER_TRIANGLE},
 //                            fileData.get(), filename);
 //     std::cout << "Encoder Status: " << encoderStatus << std::endl;
 // }
@@ -194,7 +201,8 @@ static bool demucs_load_model(
 // {
 //     if (argc != 4)
 //     {
-//         std::cerr << "Usage: " << argv[0] << " <model file> <wav file> <out dir>"
+//         std::cerr << "Usage: " << argv[0] << " <model file> <wav file> <out
+//         dir>"
 //                   << std::endl;
 //         exit(1);
 //     }
@@ -212,7 +220,8 @@ static bool demucs_load_model(
 //     std::filesystem::path output_dir_path(out_dir);
 //     if (!std::filesystem::exists(output_dir_path))
 //     {
-//         std::cerr << "Directory does not exist: " << out_dir << ". Creating it."
+//         std::cerr << "Directory does not exist: " << out_dir << ". Creating
+//         it."
 //                   << std::endl;
 //         if (!std::filesystem::create_directories(output_dir_path))
 //         {
@@ -223,7 +232,8 @@ static bool demucs_load_model(
 //     }
 //     else if (!std::filesystem::is_directory(output_dir_path))
 //     {
-//         std::cerr << "Error: " << out_dir << " exists but is not a directory!"
+//         std::cerr << "Error: " << out_dir << " exists but is not a
+//         directory!"
 //                   << std::endl;
 //         return 1;
 //     }
@@ -231,7 +241,8 @@ static bool demucs_load_model(
 //     Eigen::MatrixXf audio = load_audio_file(wav_file);
 //     Eigen::Tensor3dXf out_targets;
 
-//     std::cout << "Running Demucs.onnx inference for: " << wav_file << std::endl;
+//     std::cout << "Running Demucs.onnx inference for: " << wav_file <<
+//     std::endl;
 
 //     // set output precision to 3 decimal places
 //     std::cout << std::fixed << std::setprecision(3);

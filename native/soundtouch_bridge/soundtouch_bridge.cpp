@@ -1,15 +1,15 @@
-#include "soundtouch_bridge.hpp"
+#include "soundtouch_bridge.h"
 #include "SoundTouch.h"
 
 using namespace soundtouch;
 
-void *st_create()
+void *soundtouch_create()
 {
     SoundTouch *st = new SoundTouch();
     return (void *)st;
 }
 
-void st_set_settings(void *handle, int sampleRate, int channels, float pitch, float tempo)
+void soundtouch_set_settings(void *handle, int sampleRate, int channels, float pitch, float tempo)
 {
     SoundTouch *st = (SoundTouch *)handle;
     st->setSampleRate(sampleRate);
@@ -22,21 +22,21 @@ void st_set_settings(void *handle, int sampleRate, int channels, float pitch, fl
 // SoundTouch는 어느 정도 내부에 데이터가 쌓여야 처리를 시작하기 때문에
 // 두 동작을 독립된 동작으로 구분시켜서 계속 스트리밍을 함
 
-void st_put_samples(void *handle, const float *samples, int numSamples)
+void soundtouch_put_samples(void *handle, const float *samples, int numSamples)
 {
     SoundTouch *st = (SoundTouch *)handle;
     int channels = 2;
     st->putSamples(samples, numSamples / channels);
 }
 
-int st_receive_samples(void *handle, float *outputBuffer, int maxSamples)
+int soundtouch_receive_samples(void *handle, float *outputBuffer, int maxSamples)
 {
     SoundTouch *st = (SoundTouch *)handle;
     int channels = 2;
     return st->receiveSamples(outputBuffer, maxSamples / channels);
 }
 
-void st_destroy(void *handle)
+void soundtouch_destroy(void *handle)
 {
     delete (SoundTouch *)handle;
 }

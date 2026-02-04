@@ -11,7 +11,7 @@ file(GLOB_RECURSE SOUNDTOUCH_SOURCES
     "${NATIVE_ROOT}/soundtouch_bridge/soundtouch/source/SoundTouch/*.cpp"
 )
 
-# # Demucs
+# Demucs
 file(GLOB_RECURSE DEMUCS_SOURCES
     "${NATIVE_ROOT}/demucs_bridge/demucs_bridge.cpp"
     "${NATIVE_ROOT}/demucs_bridge/demucs.onnx/src/*.cpp"
