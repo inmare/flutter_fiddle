@@ -49,3 +49,6 @@ native/soundtouch/**.*
 
 # Assets
 assets/**.*
+
+# Cache
+.cache/
