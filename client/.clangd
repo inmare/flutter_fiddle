@@ -1,0 +1,3 @@
+CompileFlags:
+  Add: 
+    - "-Inative/soundtouch_bridge/soundtouch/include"
