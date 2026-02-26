@@ -25,6 +25,11 @@ class _AppState extends State<App> {
     final songDir = Directory(path.join(cacheDir.path, 'songs'));
     if (!await songDir.exists()) {
       await songDir.create(recursive: true);
+    } else {
+      // song 폴더 내부의 파일 삭제
+      for (var file in songDir.listSync()) {
+        await file.delete(recursive: true);
+      }
     }
   }
 
@@ -37,6 +42,7 @@ class _AppState extends State<App> {
   @override
   void dispose() {
     super.dispose();
+    _initCacheDir();
   }
 
   @override
