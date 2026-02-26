@@ -10,7 +10,10 @@ dependencies:
   ffi: ^2.1.5
   flutter:
     sdk: flutter
+  http: ^1.6.0
   mp_audio_stream: ^0.2.2
+  path: ^1.9.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
