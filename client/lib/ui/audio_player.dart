@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dart_pcm/audio/audio_manager.dart';
+import 'package:dart_pcm/audio/song_model.dart';
+import 'package:dart_pcm/ui/queue_song_item.dart';
 import 'package:dart_pcm/utils/audio_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:mp_audio_stream/mp_audio_stream.dart';
@@ -38,9 +41,7 @@ class _AudioPlayerState extends State<AudioPlayer> {
   @override
   void dispose() {
     // 상태 변화
-    setState(() {
-      _isPlaying = false;
-    });
+    _isPlaying = false;
     // AudioStream 해제
     _audioStream.uninit();
     super.dispose();
@@ -83,15 +84,41 @@ class _AudioPlayerState extends State<AudioPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 10,
-      children: [
-        AudioButton(label: '시작', onPressed: _playMusic),
-        AudioButton(label: '간주 점프', onPressed: () {}),
-        AudioButton(label: '음정 +1', onPressed: () {}),
-        AudioButton(label: '음정 -1', onPressed: () {}),
-      ],
+    return Center(
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 10,
+            children: [
+              AudioButton(label: '시작', onPressed: _playMusic),
+              AudioButton(label: '취소', onPressed: () {}),
+              AudioButton(label: '간주 점프', onPressed: () {}),
+              AudioButton(label: '음정 +1', onPressed: () {}),
+              AudioButton(label: '음정 -1', onPressed: () {}),
+            ],
+          ),
+          Expanded(
+            // ListenableBuilder를 사용하여 AudioManager의 상태 변화를 감지하여 리스트 업데이트
+            child: ListenableBuilder(
+              listenable: AudioManager(),
+              builder: (context, child) {
+                // builder 내부에서 AudioManager 호출
+                final queueSong = AudioManager().queueSongs;
+                return ListView.builder(
+                  itemCount: queueSong.length,
+                  itemBuilder: (context, index) {
+                    return QueueSongItem(
+                      id: queueSong[index].id,
+                      name: queueSong[index].localPath,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
