@@ -53,9 +53,13 @@ class _AudioPlayerState extends State<AudioPlayer> {
       _isPlaying = true;
     });
 
+    final String fileId = '1odORmBdBH4fY1pbQYM7sVMkAQkOEKcsz';
+    final String directUrl =
+        'https://drive.google.com/uc?export=download&id=$fileId';
+    // 'assets/Miku-Ringtone.mp3'
     final process = await Process.start('assets/ffmpeg.exe', [
       '-re', // Read input at native frame rate
-      '-i', 'assets/Miku-Ringtone.mp3', // Input file
+      '-i', directUrl, // Input file
       '-f', 'f32le', // PCM 32-bit float little-endian
       '-ar', '44100', // Sample rate
       '-ac', '2', // Number of channels
