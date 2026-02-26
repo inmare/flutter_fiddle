@@ -53,6 +53,7 @@ class _SongSearchState extends State<SongSearch> {
             itemCount: _songs.length,
             itemBuilder: (context, index) {
               return SongItem(
+                id: _songs[index]["id"],
                 name: _songs[index]["title"],
                 // artist: _songs[index]["artist"],
                 songLink: _songs[index]["songLink"],
