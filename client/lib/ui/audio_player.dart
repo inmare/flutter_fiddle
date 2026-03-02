@@ -87,6 +87,16 @@ class _AudioPlayerState extends State<AudioPlayer> {
     return Center(
       child: Column(
         children: [
+          StreamBuilder(
+            stream: FFmpegAudio().currentTimeStream,
+            builder: (context, snapshot) {
+              double progress = snapshot.data ?? 0.0;
+              return ProgressBar(
+                progress: Duration(seconds: progress.toInt()),
+                total: Duration(seconds: FFmpegAudio().totalTime.toInt()),
+              );
+            },
+          ),
           Row(
             mainAxisSize: MainAxisSize.min,
             spacing: 10,
