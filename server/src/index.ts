@@ -36,7 +36,8 @@ const startServer = async () => {
     const song = await Song.create({
         title: '당신에게 메롱',
         songLink: 'https://youtu.be/cIJmxkohX3Q',
-        mrLink: 'https://drive.google.com/file/d/1odORmBdBH4fY1pbQYM7sVMkAQkOEKcsz/view?usp=sharing'
+        // https://drive.google.com/file/d/1odORmBdBH4fY1pbQYM7sVMkAQkOEKcsz/view?usp=sharing
+        mrLink: 'https://drive.google.com/uc?export=download&id=1odORmBdBH4fY1pbQYM7sVMkAQkOEKcsz'
     });
     const artist = await Artist.create({ name: '히후미' });
     await song.addArtist(artist);
