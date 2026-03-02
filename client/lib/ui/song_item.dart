@@ -25,16 +25,32 @@ class SongItem extends StatelessWidget {
   void _downloadSong() async {
     try {
       // 파일 다운로드
-      final response = await http.get(Uri.parse(mrLink));
-      final directory = await getApplicationCacheDirectory();
-      final filePath = path.join(directory.path, 'songs', '$name.mp3');
+      var url = Uri.parse(mrLink);
+      var response = await http.get(url);
+      // String? contentType = response.headers['content-type'];
+      String? contentDisposition = response.headers['content-disposition'];
+      debugPrint(contentDisposition);
+      String? filename = contentDisposition
+          ?.split('filename=')[1]
+          .replaceAll('"', '');
+      // 파일 확장자 추출, 없는 경우에는 .mp3로 설정
+      // TODO: 파일 확장자 추출 로직 추가
+      String extension = filename?.split('.').last ?? 'mp3';
+      debugPrint(filename);
+      debugPrint(extension);
+      Directory directory = await getApplicationCacheDirectory();
+      String filePath = path.join(directory.path, 'songs', '$name.$extension');
 
-      final file = File(filePath);
+      File file = File(filePath);
       await file.writeAsBytes(response.bodyBytes);
       debugPrint('$filePath의 파일을 다운로드 완료했습니다');
 
       // 파일 추가
-      final song = DownloadedSong(id: id, title: name, localPath: filePath);
+      DownloadedSong song = DownloadedSong(
+        id: id,
+        title: name,
+        localPath: filePath,
+      );
       QueueManager().addSong(song);
       debugPrint('파일을 추가했습니다');
       debugPrint('현재 큐에 있는 노래: ${QueueManager().queueSongs.length}개');
