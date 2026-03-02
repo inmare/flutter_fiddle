@@ -1,13 +1,13 @@
-import 'package:dart_pcm/audio/song_model.dart';
+import 'package:dart_pcm/audio_player/song_model.dart';
 import 'package:flutter/material.dart';
 
-class AudioManager extends ChangeNotifier {
+class QueueManager extends ChangeNotifier {
   // 전역 객체 사용
-  static final AudioManager _instance = AudioManager._internal();
+  static final QueueManager _instance = QueueManager._internal();
   // 전역 객체 반환, factory로 항상 동일한 객체 반환
-  factory AudioManager() => _instance;
+  factory QueueManager() => _instance;
   // 임의의 생성자로 클래스 내부에서 전역 객체 생성
-  AudioManager._internal();
+  QueueManager._internal();
 
   final List<DownloadedSong> _queueSongs = [];
   List<DownloadedSong> get queueSongs => _queueSongs;
@@ -16,7 +16,7 @@ class AudioManager extends ChangeNotifier {
   bool get isPlaying => _isPlaying;
 
   // 현재 재생되고 있는 노래
-  DownloadedSong? _currentSong = null;
+  DownloadedSong? _currentSong;
 
   void addSong(DownloadedSong song) {
     _queueSongs.add(song);

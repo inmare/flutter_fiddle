@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:dart_pcm/audio/audio_manager.dart';
-import 'package:dart_pcm/audio/song_model.dart';
+import 'package:dart_pcm/audio_player/queue_manager.dart';
+import 'package:dart_pcm/audio_player/song_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -35,9 +35,9 @@ class SongItem extends StatelessWidget {
 
       // 파일 추가
       final song = DownloadedSong(id: id, title: name, localPath: filePath);
-      AudioManager().addSong(song);
+      QueueManager().addSong(song);
       debugPrint('파일을 추가했습니다');
-      debugPrint('현재 큐에 있는 노래: ${AudioManager().queueSongs.length}개');
+      debugPrint('현재 큐에 있는 노래: ${QueueManager().queueSongs.length}개');
     } catch (e) {
       debugPrint(e.toString());
     }

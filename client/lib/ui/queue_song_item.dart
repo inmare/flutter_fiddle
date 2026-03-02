@@ -1,4 +1,4 @@
-import 'package:dart_pcm/audio/audio_manager.dart';
+import 'package:dart_pcm/audio_player/queue_manager.dart';
 import 'package:flutter/material.dart';
 
 class QueueSongItem extends StatelessWidget {
@@ -7,7 +7,7 @@ class QueueSongItem extends StatelessWidget {
   const QueueSongItem({super.key, required this.id, required this.name});
 
   void _removeSong() {
-    AudioManager().removeSong(id);
+    QueueManager().removeSong(id);
   }
 
   @override

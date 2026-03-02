@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:dart_pcm/audio/audio_manager.dart';
-import 'package:dart_pcm/audio/song_model.dart';
+import 'package:dart_pcm/audio_player/queue_manager.dart';
+import 'package:dart_pcm/audio_player/song_model.dart';
 import 'package:dart_pcm/ui/queue_song_item.dart';
 import 'package:dart_pcm/utils/audio_utils.dart';
 import 'package:flutter/material.dart';
@@ -101,10 +101,10 @@ class _AudioPlayerState extends State<AudioPlayer> {
           Expanded(
             // ListenableBuilder를 사용하여 AudioManager의 상태 변화를 감지하여 리스트 업데이트
             child: ListenableBuilder(
-              listenable: AudioManager(),
+              listenable: QueueManager(),
               builder: (context, child) {
                 // builder 내부에서 AudioManager 호출
-                final queueSong = AudioManager().queueSongs;
+                final queueSong = QueueManager().queueSongs;
                 return ListView.builder(
                   itemCount: queueSong.length,
                   itemBuilder: (context, index) {
