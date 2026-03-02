@@ -1,3 +1,4 @@
+import 'package:dart_pcm/audio_player/ffmpeg_audio.dart';
 import 'package:dart_pcm/audio_player/song_model.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +18,7 @@ class QueueManager extends ChangeNotifier {
 
   // 현재 재생되고 있는 노래
   DownloadedSong? _currentSong;
+  DownloadedSong? get currentSong => _currentSong;
 
   void addSong(DownloadedSong song) {
     _queueSongs.add(song);
@@ -39,6 +41,7 @@ class QueueManager extends ChangeNotifier {
     _queueSongs.removeAt(0);
     notifyListeners();
     // TODO: ffmpeg기반 노래 재생 로직 추가하기
+    FFmpegAudio().play(QueueManager().currentSong!.localPath, 0.0);
   }
 
   void cancelSong() {
@@ -46,6 +49,7 @@ class QueueManager extends ChangeNotifier {
     _currentSong = null;
     notifyListeners();
     // TODO: ffmpeg기반 노래 취소 로직 추가하기
+    FFmpegAudio().stop();
   }
 
   // TODO: 한 노래가 끝나면 자동으로 queue의 다음 노래가 재생되는 로직 추가하기
