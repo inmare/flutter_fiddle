@@ -92,7 +92,7 @@ class _AudioPlayerState extends State<AudioPlayer> {
             spacing: 10,
             children: [
               AudioButton(label: '시작', onPressed: _playMusic),
-              AudioButton(label: '취소', onPressed: () {}),
+              AudioButton(label: '취소', onPressed: _cancelMusic),
               AudioButton(label: '간주 점프', onPressed: () {}),
               AudioButton(label: '음정 +1', onPressed: () {}),
               AudioButton(label: '음정 -1', onPressed: () {}),
